@@ -5,6 +5,7 @@ It works using data gathered from a document interface.
 ]]--
 
 local Cache = require("cache")
+local CollectionTest = require("apps/collections/collectiontest")
 local ConfirmBox = require("ui/widget/confirmbox")
 local Device = require("device")
 local DocSettings = require("docsettings")
@@ -348,6 +349,10 @@ function ReaderUI:init()
     })
     -- history view
     self:registerModule("history", FileManagerHistory:new{
+        dialog = self.dialog,
+        ui = self,
+    })
+    self:registerModule("show_collection", CollectionTest:new {
         dialog = self.dialog,
         ui = self,
     })

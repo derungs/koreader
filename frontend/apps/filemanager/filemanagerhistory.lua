@@ -8,16 +8,19 @@ local Screen = require("device").screen
 local filemanagerutil = require("apps/filemanager/filemanagerutil")
 local util = require("ffi/util")
 local _ = require("gettext")
+local logger = require("logger")
 
 local FileManagerHistory = InputContainer:extend{
     hist_menu_title = _("History"),
 }
 
 function FileManagerHistory:init()
+    logger.warn("FileManagerHistory:init")
     self.ui.menu:registerToMainMenu(self)
 end
 
 function FileManagerHistory:addToMainMenu(menu_items)
+    logger.warn("FileManagerHistory:addToMainMenu")
     -- insert table to main tab of filemanager menu
     menu_items.history = {
         text = self.hist_menu_title,

@@ -498,8 +498,11 @@ TARGET:
 
     android         install and run KOReader on an Android device connected through ADB
     "
-    screen_width=540
-    screen_height=720
+#    screen_width=540
+#    screen_height=720
+    screen_width=758
+    screen_height=1024
+    screen_dpi=213
     export KODEBUG=1
     while [[ "${1}" == '-'* ]]; do
         PARAM=$(echo "${1}" | awk -F= '{print $1}')

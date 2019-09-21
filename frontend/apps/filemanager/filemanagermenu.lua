@@ -1,5 +1,6 @@
 local CenterContainer = require("ui/widget/container/centercontainer")
 local CloudStorage = require("apps/cloudstorage/cloudstorage")
+--local CollectionTest = require("apps/collections/collectiontest")
 local ConfirmBox = require("ui/widget/confirmbox")
 local Device = require("device")
 local Event = require("ui/event")
@@ -432,6 +433,13 @@ function FileManagerMenu:setUpdateItemTable()
             })
         end
     }
+
+    -- self.menu_items.show_collection = {
+    --     text = _("Show Collection"),
+    --     callback = function()
+    --         CollectionTest:onShowCollection()
+    --     end
+    -- }
     -- insert common info
     for id, common_setting in pairs(dofile("frontend/ui/elements/common_info_menu_table.lua")) do
         self.menu_items[id] = common_setting

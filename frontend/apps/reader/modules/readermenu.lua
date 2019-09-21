@@ -1,4 +1,5 @@
 local CenterContainer = require("ui/widget/container/centercontainer")
+--local CollectionTest = require("apps/collections/collectiontest")
 local ConfirmBox = require("ui/widget/confirmbox")
 local Device = require("device")
 local Event = require("ui/event")
@@ -213,6 +214,13 @@ function ReaderMenu:setUpdateItemTable()
         self.menu_items.exit = nil
         self.menu_items.restart_koreader = nil
     end
+
+    -- self.menu_items.show_collection = {
+    --     text = _("Show Collection"),
+    --     callback = function()
+    --         CollectionTest:onShowCollection();
+    --     end
+    -- }
 
     self.menu_items.open_previous_document = {
         text_func = function()
