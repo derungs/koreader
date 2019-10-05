@@ -28,6 +28,32 @@ local medium = {
         }
 }
 
-print("# fields:", #medium)
-print("middle:", medium[1][41], "surrounded by", medium[1][40], medium[1][42])
-print("middle:", medium[2][41], "surrounded by", medium[2][40], medium[2][42])
+local test = {
+  3, 6, 5,   4, 9, 2,   1, 8, 7,
+  9, 8, 1,   5, 7, 6,   3, 2, 4,
+  7, 2, 4,   8, 1, 3,   5, 6, 9,
+
+  4, 1, 9,   6, 3, 8,   2, 7, 5,
+  6, 7, 3,   2, 0, 9,   4, 1, 8,
+  2, 5, 8,   1, 4, 7,   9, 3, 6,
+
+  5, 3, 2,   7, 8, 4,   6, 9, 1,
+  1, 9, 7,   3, 6, 5,   8, 4, 2,
+  8, 4, 6,   9, 2, 1,   7, 5, 3,
+}
+
+local Board = require("board")
+
+local b = Board:new()
+b:init(test)
+
+repeat
+    b:draw()
+    io.write("i j n: ")
+    io.flush()
+    local i = io.read("*n")
+    local j = io.read("*n")
+    local n = io.read("*n")
+    if n == 0 then n = nil end
+    b.rows[i][j]:set(n)
+until b:complete()
