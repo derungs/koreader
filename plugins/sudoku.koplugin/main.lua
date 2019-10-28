@@ -36,10 +36,10 @@ end
 
 function Sudoku:play()
     logger.warn("Yay! Sudoku!")
-    local sw = SudokuContainer:new{
+    local board = SudokuContainer:new{
         board = test_boards[1],
     }
-    sw:run()
+    UIManager:show(board)
     --[[
     local full_widget
     local close_button = Button:new{
