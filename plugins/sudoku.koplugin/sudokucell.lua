@@ -9,73 +9,39 @@ local HorizontalGroup = require("ui/widget/horizontalgroup")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local Screen = Device.screen
 local Size = require("ui/size")
-local TextBoxWidget = require("ui/widget/textboxwidget")
+local SudokuPopup = require("sudokupopup")
+local TextWidget = require("ui/widget/textwidget")
 local UIManager = require("ui/uimanager")
 local VerticalGroup = require("ui/widget/verticalgroup")
 local logger = require("logger")
-
-local function _framed(widget, width)
-    width = width or Size.border.default
-    return FrameContainer:new{
-        padding = 0,
-        bordersize = width,
-        widget
-    }
-end
-
-local SudokuDialog = InputContainer:new{
-    size = Screen:getWidth() / 11
-}
-
-function SudokuDialog:init()
-    local box = VerticalGroup:new()
-    for i = 0,2 do
-        local line = HorizontalGroup:new()
-        for j = 1,3 do
-            line[j] = _framed(CenterContainer:new{
-                dimen = Geom:new{ w = self.size, h = self.size },
-                TextBoxWidget:new{
-                    dimen = Geom:new{
-                        w = self.size, h = self.size
-                    },
-                    text = i*3 + j,
-                    face = Font:getFace("cfont", self.size / 2)
-            }}, Size.border.thin)
-        end
-        box[i+1] = _framed(line)
-    end
-    self[1] = _framed(box)
-    self.dimen = self[1]:getSize()
-end
-
-function SudokuDialog:paintTo(bb, x, y)
-    self.dimen.x = x
-    self.dimen.y = y
-    InputContainer.paintTo(self, bb, x, y)
-end
-
-function SudokuDialog:onCloseWidget()
-    UIManager:setDirty(nil, function()
-        return "partial", self.dimen
-    end)
-end
 
 local SudokuCell = InputContainer:new{
     fixed = nil,
     number = nil,
     numbers = nil,
-    dimen = nil,
+    size = nil,
     x = nil,
     y = nil,
-    enabled = true,
-    callback = function()
-        logger.warn("!! callback called")
-    end
+    board = nil,
 }
 
 function SudokuCell:init()
-    if Device:isTouchDevice() then
-        logger.warn("touch device", self.x, self.y, self.dimen)
+    local font = self.fixed and "tfont" or "cfont"
+    local fontsize = self.fixed and self.size / 2 or self.size * 2 / 3
+    self._text = TextWidget:new{
+        text = self.number or "",
+        face = Font:getFace(font)
+    }
+    local content = CenterContainer:new{
+        dimen = Geom:new{
+            w = self.size,
+            h = self.size,
+        },
+        self._text
+    }
+    self.dimen = content.dimen
+    self[1] = content
+    if not self.fixed and Device:isTouchDevice() then
         self.ges_events = {
             TapSelect = {
                 GestureRange:new{
@@ -95,22 +61,15 @@ function SudokuCell:init()
     end
 end
 
-function SudokuCell:paintTo(bb, x, y)
-    self.dimen.x = x
-    self.dimen.y = y
-
-    logger.warn("new dimen", self.dimen)
-    bb:paintRect(x + self.dimen.w / 4, y + self.dimen.h / 4, self.dimen.w / 2, self.dimen.h / 2, BlitBuffer.COLOR_GRAY)
-end
-
 function SudokuCell:onTapSelect(arg, ges)
     logger.warn("tapped", self.x, self.y, self.number, self.fixed, self.numbers)
-    local temp = SudokuDialog:new()
+    local temp = SudokuPopup:new{
+        cell = self,
+    }
     local region = temp:getSize()
     region.x = self.dimen.x - 50
     region.y = self.dimen.y - 50
-    UIManager:show(temp, "ui", region, region.x, region.y)
---    UIManager:show(temp)
+    UIManager:show(temp, nil, nil, region.x, region.y)
     return true
 end
 
@@ -150,6 +109,7 @@ function SudokuCell:set(n)
         self.number = n
         self.numbers = nil
     end
+    self._text.text = self.number or ""
 end
 
 function SudokuCell:clear()
