@@ -30,94 +30,17 @@ local function _framed(widget, width)
     }
 end
 
-local SudokuContainer = FrameContainer:new{
-    dimen = Geom:new{
-        w = Screen:getWidth(),
-        h = Screen:getHeight()
-    },
+local SudokuContainer = VerticalGroup:new{
+    cell_size = nil,
     board = nil,
     difficulty = _("Test"),
-
-    -- FrameContainer properties
-    bordersize = 0,
-    padding = 0,
-    inner_bordersize = 1,
-    background = BlitBuffer.COLOR_WHITE,
+    completed = function() end,
 }
 
 function SudokuContainer:init()
     self._complete = nil
-    -- playing field - most of the space
-    -- grouped:
-    --   row of 1..9 buttons; more?
-    --   bottom - close, restart?
-    local remaining_height = self.dimen.h
 
-    -- Close and restart buttons
-    local buttons = HorizontalGroup:new{
-        Button:new{
-            text = _("New game"),
-            radius = Size.radius.window,
-            callback = function()
-                logger.warn("new sudoku game")
-            end,
-        },
-        HorizontalSpan:new{
-            width = 2 * Size.span.horizontal_default
-        },
-        Button:new{
-            text = _("Restart"),
-            radius = Size.radius.window,
-            callback = function()
-                logger.warn("restart sudoku")
-            end,
-        },
-        HorizontalSpan:new{
-            width = 2 * Size.span.horizontal_default
-        },
-        Button:new{
-            text = _("Close"),
-            radius = Size.radius.window,
-            callback = function()
-                logger.warn("close window")
-                UIManager:close(self)
-            end,
-        }
-    }
-    local temp = VerticalGroup:new{
-        VerticalSpan:new{width = Size.padding.fullscreen},
-        buttons,
-        VerticalSpan:new{width = Size.padding.fullscreen}
-    }
-    local button_row = CenterContainer:new{
-        dimen = Geom:new{
-            h = temp:getSize().h,
-            w = self.dimen.w
-        },
-        temp
-    }
-    remaining_height = remaining_height - button_row:getSize().h
-    logger.warn("remaining height", remaining_height)
-
-    -- title row
-    self._title = TextWidget:new{
-        text = self.difficulty,
-        face = Font:getFace("tfont")
-    }
-    local title_row = FrameContainer:new{
-        bordersize = 0,
-        padding = Size.padding.fullscreen,
-        inner_bordersize = 1,
-        LeftContainer:new{
-            dimen = Geom:new{ w = self.dimen.w - 2 * Size.padding.fullscreen },
-            self._title,
-        }
-    }
-    remaining_height = remaining_height - title_row:getSize().h
-
-    local cell_size = math.ceil(math.min(remaining_height, self.dimen.w) / 12)
     self.rows = {}
-    self._sudoku_widget = VerticalGroup:new()
     for i = 0,2 do
         local group = HorizontalGroup:new()
         for j = 0,2 do
@@ -130,7 +53,7 @@ function SudokuContainer:init()
                     local cell
                     local preset = self.board[9*(i*3+m-1) + (j*3+n)]
                     cell = SudokuCell:new{
-                        size = cell_size,
+                        size = self.cell_size,
                         x = i*3+m,
                         y = j*3+n,
                         fixed = preset ~= 0,
@@ -145,20 +68,8 @@ function SudokuContainer:init()
             end
             table.insert(group, _framed(block, Size.border.button))
         end
-        table.insert(self._sudoku_widget, group)
+        table.insert(self, group)
     end
-    local play_field = CenterContainer:new{
-        dimen = Geom:new{
-            w = self.dimen.w,
-            h = remaining_height
-        },
-        _framed(self._sudoku_widget, Size.border.window)
-    }
-    table.insert(self, VerticalGroup:new{
-        _framed(title_row, 0),
-        _framed(play_field, 0),
-        _framed(button_row, 0),
-    })
 end
 
 function SudokuContainer:isComplete()
@@ -226,14 +137,12 @@ function SudokuContainer:validate()
     if self:isComplete() then
         logger.warn("complete")
         if not self._complete then
-            self._title.text = self.difficulty .. ": Complete"
-            UIManager:setDirty(self._title)
+            self.completed(true)
         end
         self._complete = true
     elseif self._complete then
         logger.warn("uncomplete")
-        self._title.text = self.difficulty
-        UIManager:setDirty(self._title)
+        self.completed(false)
         self._complete = nil
     end
 end
