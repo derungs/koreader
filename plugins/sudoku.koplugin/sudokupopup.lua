@@ -57,7 +57,7 @@ function Number:onTapSelect()
 end
 
 local SudokuPopup = InputContainer:new{
-    size = Screen:getWidth() / 10,
+    size = nil,
     cell = nil
 }
 
@@ -77,7 +77,10 @@ function SudokuPopup:init()
         end
         box[i+1] = _framed(line)
     end
-    self[1] = _framed(box)
+    self[1] = FrameContainer:new{
+        background = BlitBuffer.COLOR_WHITE,
+        box,
+    }
     self.dimen = self[1]:getSize()
 
     --[
@@ -103,13 +106,13 @@ function SudokuPopup:onTapClose()
     UIManager:close(self)
 end
 
-function SudokuPopup:paintTo(bb, x, y)
-    InputContainer.paintTo(self, bb, x, y)
+function SudokuPopup:onCloseWidget()
+    UIManager:nextTick(function() self.cell.board:validate() end)
 end
 
 function SudokuPopup:select(number)
-    self.cell:set(number)
     UIManager:close(self)
+    self.cell:set(number)
 end
 
 return SudokuPopup

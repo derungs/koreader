@@ -26,11 +26,11 @@ local SudokuCell = InputContainer:new{
 }
 
 function SudokuCell:init()
-    local font = self.fixed and "tfont" or "cfont"
+    local font = self.fixed and "tfont" or "infont"
     local fontsize = self.fixed and self.size / 2 or self.size * 2 / 3
     self._text = TextWidget:new{
         text = self.number or "",
-        face = Font:getFace(font)
+        face = Font:getFace(font, fontsize)
     }
     local content = CenterContainer:new{
         dimen = Geom:new{
@@ -40,7 +40,12 @@ function SudokuCell:init()
         self._text
     }
     self.dimen = content.dimen
-    self[1] = content
+    self[1] = FrameContainer:new{
+        background = self.fixed and BlitBuffer.COLOR_GRAY_E,
+        bordersize = Size.border.thin,
+        padding = 0,
+        content
+    }
     if not self.fixed and Device:isTouchDevice() then
         self.ges_events = {
             TapSelect = {
@@ -62,13 +67,13 @@ function SudokuCell:init()
 end
 
 function SudokuCell:onTapSelect(arg, ges)
-    logger.warn("tapped", self.x, self.y, self.number, self.fixed, self.numbers)
     local temp = SudokuPopup:new{
         cell = self,
+        size = self.size,
     }
     local region = temp:getSize()
-    region.x = self.dimen.x - 50
-    region.y = self.dimen.y - 50
+    region.x = self.dimen.x - (region.w - self.dimen.w) / 2
+    region.y = self.dimen.y - (region.h - self.dimen.h) / 2
     UIManager:show(temp, nil, nil, region.x, region.y)
     return true
 end
@@ -110,6 +115,7 @@ function SudokuCell:set(n)
         self.numbers = nil
     end
     self._text.text = self.number or ""
+--    self.board:validate()
 end
 
 function SudokuCell:clear()
