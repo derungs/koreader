@@ -25,7 +25,6 @@ local function _framed(widget, width)
     return FrameContainer:new{
         padding = 0,
         bordersize = width,
-        inner_bordersize = 1,
         widget
     }
 end

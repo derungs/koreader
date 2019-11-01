@@ -43,6 +43,7 @@ function SudokuCell:init()
     self[1] = FrameContainer:new{
         background = self.fixed and BlitBuffer.COLOR_GRAY_E,
         bordersize = Size.border.thin,
+        inner_bordersize = self.fixed and Size.border.button or 0,
         padding = 0,
         content
     }
