@@ -13,6 +13,7 @@ local HorizontalSpan = require("ui/widget/horizontalspan")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local LeftContainer = require("ui/widget/container/leftcontainer")
 local LineWidget = require("ui/widget/linewidget")
+local RadioButton = require("ui/widget/radiobutton")
 local Screen = require("device").screen
 local Size = require("ui/size")
 local SudokuCell = require("sudokucell")
@@ -61,114 +62,47 @@ function Sudoku:addToMainMenu(menu_items)
     }
 end
 
-local RadioBtn = InputContainer:new{
-    id = nil,
-    text = "",
-    face = Font:getFace("cfont"),
-    width = nil,
-    checked = false,
-
-    checked_mark = "◉ ",
-    unchecked_mark = "◯ ",
-    group = nil,
-}
-function RadioBtn:init()
-    self._text_widget = TextWidget:new{
-        text = self:makeText(),
-        face = self.face,
-        max_width = self.width
-    }
-    self[1] = self._text_widget
-    self.dimen = self[1]:getSize()
-    logger.warn("RadioButton size", self.dimen.w, self.dimen.h)
-    if Device:isTouchDevice() then
-        self.ges_events = {
-            TapSelect = {
-                GestureRange:new{
-                    ges = "tap",
-                    range = self.dimen,
-                },
-                doc = "Select radio button",
-            },
-        }
-    end
-end
-function RadioBtn:makeText()
-    local new_text = ((self.checked and self.checked_mark) or (self.unchecked_mark .. " ")) .. self.text
-    logger.warn(self.id, self.checked, new_text)
-    return new_text
-end
-function RadioBtn:onTapSelect()
-    logger.warn("toggle radio button", self.id)
-    if not self.checked then
-        if self.group.selected then
-            self.group.selected:uncheck()
-        end
-        self:check()
---        UIManager:setDirty(self.group)
-        UIManager:widgetRepaint(self.group, self.group.dimen.x, self.group.dimen.y)
-    end
-    return true
-end
-function RadioBtn:check()
-    logger.warn("check", self.id)
-    self.group.selected = self
-    self.checked = true
-    self._text_widget.text = self:makeText()
---    UIManager:setDirty(self._text_widget)
-end
-function RadioBtn:uncheck()
-    logger.warn("uncheck", self.id)
-    self.checked = false
-    self._text_widget.text = self:makeText()
---    UIManager:setDirty(self._text_widget)
-end
-
-local RadioButtonGroup = InputContainer:new{
-    face = Font:getFace("cfont"),
-    width = nil,
-    buttons = { { id = "first", text = "First"}, },
-    selected = nil,
-}
-function RadioButtonGroup:init()
-    self[1] = VerticalGroup:new()
-    for _, button in ipairs(self.buttons) do
-        local rb = RadioBtn:new{
-            id = button.id,
-            text = button.text,
-            face = self.face,
-            width = self.width,
-            group = self,
-        }
-        table.insert(self[1], LeftContainer:new{
-            dimen = Geom:new{
-                w = self.width,
-                h = rb:getSize().h,
-            },
-            rb
-        })
-    end
-    self.dimen = Geom:new{ w = self.width, h = self[1]:getSize().h }
-end
-
 function Sudoku:selectBoard()
-    local difficulty_selection = RadioButtonGroup:new{
-        width = Screen:getWidth() / 2,
-        buttons = {
-            { id = "test", text = _("Test") },
-            { id = "medium", text = _("Medium") },
-        }
+    local width = Screen:getWidth() / 2
+    local window = FrameContainer:new{
+        radius = Size.radius.window,
+        background = BlitBuffer.COLOR_WHITE,
+
+        selected = nil,
+        face = Font:getFace("cfont"),
     }
+    local function radioButton(id, text)
+        local button = RadioButton:new{
+            id = id,
+            text = text,
+            face = window.face,
+            width = width,
+            parent = window,
+        }
+        button.checked = function()
+            return window.selected == button
+        end
+        button.callback = function()
+            if window.selected ~= button then
+                if window.selected then
+                    window.selected:unCheck()
+                end
+                window.selected = button
+                button:check()
+            end
+        end
+        return button
+    end
     local buttons = HorizontalGroup:new{
         Button:new{
             text = _("Start"),
+            enabled = window.selected,
             callback = function()
-                UIManager:close(self._window)
-                difficulty_selection.selected = difficulty_selection.selected or difficulty_selection[1][1]
-                local diff = difficulty_selection.selected.id
+                UIManager:close(window)
+                local diff = window.selected
                 logger.warn("difficulty selected", diff)
-                self.board = self[diff or "test"][1]
-                self.difficulty = difficulty_selection.selected.text
+                self.board = self[diff.id][1]
+                self.difficulty = diff.text
                 self:play()
             end
         },
@@ -178,68 +112,51 @@ function Sudoku:selectBoard()
         Button:new{
             text = _("Cancel"),
             callback = function()
-                UIManager:close(self._window)
+                UIManager:close(window)
             end
         }
     }
-    local difficulty_text = TextWidget:new{
-        text = _("Difficulty"),
-        face = Font:getFace("cfont"),
-    }
-    self._window = FrameContainer:new{
-        bordersize = 0,
-        padding = 0,
-        background = BlitBuffer.COLOR_WHITE,
-    }
-    table.insert(self._window, CenterContainer:new{
-        dimen = Geom:new{
-            w = Screen:getWidth(),
-            h = Screen:getHeight(),
+    table.insert(window, VerticalGroup:new{
+        TextWidget:new{
+            text = _("New game"),
+            face = Font:getFace("tfont"),
         },
-        FrameContainer:new{
-            bordersize = Size.border.window,
-            radius = Size.radius.window,
-            VerticalGroup:new{
-                TextWidget:new{
-                    text = _("New game"),
-                    face = Font:getFace("tfont"),
-                },
-                LineWidget:new{
-                    dimen = Geom:new{
-                        w = Screen:getWidth() / 2,
-                        h = Size.line.medium
-                    }
-                },
-                VerticalGroup:new{
-                    LeftContainer:new{
-                        dimen = Geom:new{
-                            w = Screen:getWidth() / 2,
-                            h = difficulty_text:getSize().h
-                        },
-                        difficulty_text,
-                    },
-                    difficulty_selection,
-                },
-                LineWidget:new{
-                    dimen = Geom:new{
-                        w = Screen:getWidth() / 2,
-                        h = Size.line.medium
-                    }
-                },
-                VerticalSpan:new{
-                    width = 2 * Size.span.vertical_large
-                },
-                buttons,
-                VerticalSpan:new{
-                    width = 2 * Size.span.vertical_large
-                },
+        LineWidget:new{
+            dimen = Geom:new{
+                w = width,
+                h = Size.line.medium
             }
-        }
+        },
+        VerticalGroup:new{
+            align = "left",
+            TextWidget:new{
+                text = _("Difficulty"),
+                face = Font:getFace("cfont"),
+            },
+            radioButton("test", "Test"),
+            radioButton("easy", "Easy"),
+            radioButton("medium", "Medium"),
+        },
+        LineWidget:new{
+            dimen = Geom:new{
+                w = width,
+                h = Size.line.medium
+            }
+        },
+        VerticalSpan:new{
+            width = 2 * Size.span.vertical_large
+        },
+        buttons,
+        VerticalSpan:new{
+            width = 2 * Size.span.vertical_large
+        },
     })
-    UIManager:show(self._window)
+    local dimen = window:getSize()
+    dimen.x = math.ceil((Screen:getWidth() - dimen.w) / 2)
+    dimen.y = math.ceil((Screen:getHeight() - dimen.h) / 2)
+    logger.warn("window size", dimen)
+    UIManager:show(window, nil, nil, dimen.x, dimen.y)
     return true
---    self.board = self.test[1]
---    self:play()
 end
 
 function Sudoku:play()
