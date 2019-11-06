@@ -64,13 +64,19 @@ end
 
 function Sudoku:selectBoard()
     local width = Screen:getWidth() / 2
-    local window = FrameContainer:new{
-        radius = Size.radius.window,
-        background = BlitBuffer.COLOR_WHITE,
+    local window = InputContainer:new{
+        CenterContainer:new{
+            dimen = Geom:new{
+                w = Screen:getWidth(),
+                h = Screen:getHeight(),
+            },
+            FrameContainer:new{
+                radius = Size.radius.window,
+                background = BlitBuffer.COLOR_WHITE,
 
-        selected = nil,
-        face = Font:getFace("cfont"),
-    }
+                selected = nil,
+                face = Font:getFace("cfont"),
+    }}}
     local function radioButton(id, text)
         local button = RadioButton:new{
             id = id,
@@ -116,7 +122,7 @@ function Sudoku:selectBoard()
             end
         }
     }
-    table.insert(window, VerticalGroup:new{
+    table.insert(window[1][1], VerticalGroup:new{
         TextWidget:new{
             text = _("New game"),
             face = Font:getFace("tfont"),
@@ -155,7 +161,7 @@ function Sudoku:selectBoard()
     dimen.x = math.ceil((Screen:getWidth() - dimen.w) / 2)
     dimen.y = math.ceil((Screen:getHeight() - dimen.h) / 2)
     logger.warn("window size", dimen)
-    UIManager:show(window, nil, nil, dimen.x, dimen.y)
+    UIManager:show(window)
     return true
 end
 
@@ -252,7 +258,8 @@ function Sudoku:play()
                     else
                         self._title.text = self.difficulty
                     end
-                    UIManager:setDirty(self._title)
+                    logger.warn("set board title", self._title.text)
+                    UIManager:setDirty(board)
                 end
             }
         }
